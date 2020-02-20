@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 
 class ScaledDotProductAttention(nn.Module):
-    def __init__(self, d_k):
+    def __init__(self, d_k, attn_pdrop):
         super(ScaledDotProductAttention, self).__init__()
         self.d_k = d_k
 
-        self.dropout = nn.Dropout(0.1) # new: attn_dropout
+        self.dropout = nn.Dropout(attn_pdrop)
     
     def forward(self, q, k, v, attn_mask):
         # |q| : (batch_size, n_heads, q_len, d_k)
@@ -19,7 +19,7 @@ class ScaledDotProductAttention(nn.Module):
         # |attn_scroe| : (batch_size, n_heads, q_len, k_len)
         
         attn_weights = nn.Softmax(dim=-1)(attn_score)
-        attn_weights = self.dropout(attn_weights) # new: attn_dropout
+        attn_weights = self.dropout(attn_weights)
         # |attn_weights| : (batch_size, n_heads, q_len, k_len)
         
         output = torch.matmul(attn_weights, v)
@@ -28,7 +28,7 @@ class ScaledDotProductAttention(nn.Module):
         return output, attn_weights
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_model, n_heads):
+    def __init__(self, d_model, n_heads, attn_pdrop):
         super(MultiHeadAttention, self).__init__()
         self.n_heads = n_heads
         self.d_k = self.d_v = d_model//n_heads
@@ -36,7 +36,7 @@ class MultiHeadAttention(nn.Module):
         self.WQ = nn.Linear(d_model, d_model)
         self.WK = nn.Linear(d_model, d_model)
         self.WV = nn.Linear(d_model, d_model)
-        self.scaled_dot_product_attn = ScaledDotProductAttention(self.d_k)
+        self.scaled_dot_product_attn = ScaledDotProductAttention(self.d_k, attn_pdrop)
         self.linear = nn.Linear(n_heads * self.d_v, d_model)
 
     def forward(self, Q, K, V, attn_mask):
@@ -72,6 +72,9 @@ class PositionWiseFeedForwardNetwork(nn.Module):
         self.linear2 = nn.Linear(d_ff, d_model)
         self.gelu = nn.GELU()
 
+        nn.init.normal_(self.linear1.weight, std=0.02)
+        nn.init.normal_(self.linear2.weight, std=0.02)
+
     def forward(self, inputs):
         # |inputs| : (batch_size, seq_len, d_model)
 
@@ -83,15 +86,15 @@ class PositionWiseFeedForwardNetwork(nn.Module):
         return outputs
 
 class DecoderLayer(nn.Module):
-    def __init__(self, d_model, n_heads, p_drop, d_ff):
+    def __init__(self, d_model, n_heads, d_ff, attn_pdrop, resid_pdrop):
         super(DecoderLayer, self).__init__()
 
-        self.mha = MultiHeadAttention(d_model, n_heads)
-        self.dropout1 = nn.Dropout(p_drop)
+        self.mha = MultiHeadAttention(d_model, n_heads, attn_pdrop)
+        self.dropout1 = nn.Dropout(resid_pdrop)
         self.layernorm1 = nn.LayerNorm(d_model, eps=1e-5)    
 
         self.ffn = PositionWiseFeedForwardNetwork(d_model, d_ff)
-        self.dropout2 = nn.Dropout(p_drop)
+        self.dropout2 = nn.Dropout(resid_pdrop)
         self.layernorm2 = nn.LayerNorm(d_model, eps=1e-5)    
 
     def forward(self, inputs, attn_mask):
@@ -112,15 +115,18 @@ class DecoderLayer(nn.Module):
         return ffn_outputs, attn_weights
 
 class TransformerDecoder(nn.Module):
-    def __init__(self, vocab_size, seq_len, d_model, n_layers, n_heads, p_drop, d_ff, pad_id):
+    def __init__(self, vocab_size, seq_len, d_model, n_layers, n_heads, d_ff, embd_pdrop, attn_pdrop, resid_pdrop, pad_id):
         super(TransformerDecoder, self).__init__()
         self.pad_id = pad_id
 
         # layers
         self.embedding = nn.Embedding(vocab_size, d_model)
+        self.dropout = nn.Dropout(embd_pdrop)
         self.pos_embedding = nn.Embedding(seq_len+1, d_model)
-        self.layers = nn.ModuleList([DecoderLayer(d_model, n_heads, p_drop, d_ff) for _ in range(n_layers)])
-    
+        self.layers = nn.ModuleList([DecoderLayer(d_model, n_heads, d_ff, attn_pdrop, resid_pdrop) for _ in range(n_layers)])
+        
+        nn.init.normal_(self.embedding.weight, std=0.02)
+        
     def forward(self, inputs):
         # |inputs| : (batch_size, seq_len)
         positions = torch.arange(inputs.size(1), device=inputs.device, dtype=inputs.dtype).repeat(inputs.size(0), 1) + 1
@@ -128,7 +134,7 @@ class TransformerDecoder(nn.Module):
         positions.masked_fill_(position_pad_mask, 0)
         # |positions| : (batch_size, seq_len)
 
-        outputs = self.embedding(inputs) + self.pos_embedding(positions)
+        outputs = self.dropout(self.embedding(inputs)) + self.pos_embedding(positions)
         # |outputs| : (batch_size, seq_len, d_model)
         
         attn_pad_mask = self.get_attention_padding_mask(inputs, inputs, self.pad_id)
@@ -167,19 +173,61 @@ class GPT(nn.Module):
                  d_model=768,
                  n_layers=12,
                  n_heads=12,
-                 p_drop=0.1,
                  d_ff=3072,
+                 embd_pdrop=0.1,
+                 attn_pdrop=0.1,
+                 resid_pdrop=0.1,
                  pad_id=0):
         super(GPT, self).__init__()
 
-        self.decoder = TransformerDecoder(vocab_size, seq_len, d_model, n_layers, n_heads, p_drop, d_ff, pad_id)
+        self.decoder = TransformerDecoder(vocab_size, seq_len, d_model, n_layers, n_heads, d_ff,
+                                          embd_pdrop, attn_pdrop, resid_pdrop, pad_id)
 
     def forward(self, inputs):
         # |inputs| : (batch_size, seq_len)
-        print(inputs.size())
         
         outputs, attention_weights = self.decoder(inputs)
         # |outputs| : (batch_size, seq_len, d_model)
         # |attention_weights| : [(batch_size, n_heads, seq_len, seq_len)] * n_layers
         
         return outputs, attention_weights
+
+class GPTLMHead(nn.Module):
+    def __init__(self, gpt):
+        super(GPTLMHead, self).__init__()
+        vocab_size, d_model = gpt.decoder.embedding.weight.size()
+        
+        self.linear = nn.Linear(d_model, vocab_size, bias=False)
+        self.linear.weight = gpt.decoder.embedding.weight
+        
+    def forward(self, h):
+        # |h| : (batch_size, seq_len, d_model)
+        
+        lm_logits = self.linear(h)
+        # |lm_logits| : (batch_size, seq_len, vocab_size)
+        
+        return lm_logits
+
+class GPTClsHead(nn.Module):
+    def __init__(self, gpt, n_class, cls_token_id, cls_pdrop=0.1):
+        super(GPTClsHead, self).__init__()
+        self.cls_token_id = cls_token_id
+        vocab_size, d_model = gpt.decoder.embedding.weight.size()
+        
+        self.linear = nn.Linear(d_model, n_class)
+        self.dropout = nn.Dropout(cls_pdrop)
+
+        nn.init.normal_(self.linear.weight, std=0.02)
+        nn.init.normal_(self.linear.bias, 0)
+        
+    def forward(self, x, h):
+        # |x| : (batch_size, seq_len)
+        # |h| : (batch_size, seq_len, d_model)
+        
+        h = h[x.eq(self.cls_token_id)]
+        # |h| : (batch_size, d_model)
+
+        cls_logits = self.linear(self.dropout(h))
+        # |cls_logits| : (batch_size, n_class)
+        
+        return cls_logits
