@@ -197,13 +197,18 @@ class GPTLMHead(nn.Module):
         super(GPTLMHead, self).__init__()
         vocab_size, d_model = gpt.decoder.embedding.weight.size()
         
+        self.gpt = gpt
         self.linear = nn.Linear(d_model, vocab_size, bias=False)
         self.linear.weight = gpt.decoder.embedding.weight
         
-    def forward(self, h):
-        # |h| : (batch_size, seq_len, d_model)
+    def forward(self, inputs):
+        # |inputs| : (batch_size, seq_len)
+
+        outputs, attention_weights = self.gpt(inputs)
+        # |outputs| : (batch_size, seq_len, d_model)
+        # |attention_weights| : [(batch_size, n_heads, seq_len, seq_len)] * n_layers
         
-        lm_logits = self.linear(h)
+        lm_logits = self.linear(outputs)
         # |lm_logits| : (batch_size, seq_len, vocab_size)
         
         return lm_logits
@@ -211,23 +216,26 @@ class GPTLMHead(nn.Module):
 class GPTClsHead(nn.Module):
     def __init__(self, gpt, n_class, cls_token_id, cls_pdrop=0.1):
         super(GPTClsHead, self).__init__()
-        self.cls_token_id = cls_token_id
         vocab_size, d_model = gpt.decoder.embedding.weight.size()
+        self.cls_token_id = cls_token_id
         
+        self.gpt = gpt
         self.linear = nn.Linear(d_model, n_class)
         self.dropout = nn.Dropout(cls_pdrop)
 
         nn.init.normal_(self.linear.weight, std=0.02)
         nn.init.normal_(self.linear.bias, 0)
         
-    def forward(self, x, h):
-        # |x| : (batch_size, seq_len)
-        # |h| : (batch_size, seq_len, d_model)
-        
-        h = h[x.eq(self.cls_token_id)]
-        # |h| : (batch_size, d_model)
+    def forward(self, inputs):
+        # |inputs| : (batch_size, seq_len)
 
-        cls_logits = self.linear(self.dropout(h))
+        outputs, attention_weights = self.gpt(inputs)
+        # |outputs| : (batch_size, seq_len, d_model)
+        # |attention_weights| : [(batch_size, n_heads, seq_len, seq_len)] * n_layers
+        outputs = outputs[inputs.eq(self.cls_token_id)]
+        # |outputs| : (batch_size, d_model)
+
+        cls_logits = self.linear(self.dropout(outputs))
         # |cls_logits| : (batch_size, n_class)
         
         return cls_logits
