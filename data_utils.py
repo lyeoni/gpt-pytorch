@@ -1,66 +1,112 @@
 from typing import Iterable, Union, List
+from pathlib import Path
 
 import torch
-from torch.utils.data import Dataset
-from torch.nn.utils.rnn import pad_sequence
+import torch.distributed as dist
+from torch.utils.data import TensorDataset
 
-class InputExample:
+class PretrainInputExample:
     """A single example for unsupervised pre-training.
     """
     def __init__(self, text: str):
         self.text = text
 
-class InputFeatures:
+class ClsInputExample:
+    """A single example for supervised fine-tuning (classification).
+    """
+    def __init__(self, text: str, label: str):
+        self.text = text
+        self.label = label
+
+class PretrainInputFeatures:
     """A single set of features of pre-training data.
     """
     def __init__(self, input_ids: List[int]):
         self.input_ids = input_ids
 
-class GPTPretrainDataset(Dataset):
-    def __init__(self, input_ids):
+class ClsInputFeatures:
+    """A single set of features of fine-tuning data (classification).
+    """
+    def __init__(self, input_ids: List[int], label_id: int):
         self.input_ids = input_ids
+        self.label_id = label_id
 
-    def __len__(self):
-        return len(self.input_ids)
-
-    def __getitem__(self, idx):
-        return torch.tensor(self.input_ids[idx])
-
-def pretrain_collate_fn(inputs):
-    inputs = pad_sequence(inputs, batch_first=True, padding_value=0)
-    return inputs
-
-def convert_examples_to_features(examples: List[InputExample],
+def convert_examples_to_features(examples,
                                  tokenizer,
-                                 max_seq_len): #-> List[InputFeatures]:
+                                 args):
     bos_token = tokenizer.bos_token
     eos_token = tokenizer.eos_token
+    pad_token = tokenizer.pad_token
+    
+    if args.finetune:
+        labels = sorted(list(set([example.label for example in examples])))
+        label_dict = {label: i for i, label in enumerate(labels)}
+        # print(label_dict)
     
     features = []
     for i, example in enumerate(examples):
         tokens = tokenizer.tokenize(example.text)
-        tokens = [bos_token] + tokens[:max_seq_len-2] + [eos_token] # BOS, EOS
-        
+        tokens = [bos_token] + tokens[:args.max_seq_len-2] + [eos_token] # BOS, EOS
+        tokens += [pad_token] * (args.max_seq_len - len(tokens)) # padding
+
         input_ids = tokenizer.convert_tokens_to_ids(tokens)
-        
-        feature = InputFeatures(input_ids)
+        if args.finetune:
+            label_id = label_dict.get(example.label)
+
+        if args.pretrain:
+            feature = PretrainInputFeatures(input_ids)
+        elif args.finetune:
+            feature = ClsInputFeatures(input_ids, label_id)
+
         features.append(feature)
 
     return features
 
-def create_examples(args, tokenizer):
-    with open(args.corpus, 'r', encoding='utf-8') as reader:
-        corpus = reader.readlines()
-    corpus = list(map(lambda x: x.strip(), corpus))
-    corpus = list(filter(lambda x: len(x) > 0, corpus))
+def create_examples(args, tokenizer, mode='train'):
+    if args.local_rank not in [-1, 0]: # Make sure only the first process in distributed training process the dataset, and the others will use the cache
+        torch.distributed.barrier()
+
+    # Load data features from cache or dataset file
+    assert mode in ('train', 'test')
+    cached_features_file = Path('cached_features_{}_{}_{}'.format('pretrain' if args.pretrain else 'finetune', mode, args.max_seq_len))
+
+    if cached_features_file.exists():
+        print('Loading features from cached file', cached_features_file)
+        features = torch.load(cached_features_file)
+    else:
+        corpus_path = args.train_corpus if mode=='train' else args.test_corpus
+        with open(corpus_path, 'r', encoding='utf-8') as reader:
+            corpus = reader.readlines()
+        
+        # Create examples
+        if args.pretrain:
+            corpus = list(map(lambda x: x.strip(), corpus))
+            corpus = list(filter(lambda x: len(x) > 0, corpus))
+            examples = [PretrainInputExample(text) for text in corpus]
+        elif args.finetune:
+            corpus = list(map(lambda x: x.split('\t'), corpus))
+            corpus = list(map(lambda x: list(map(lambda y: y.strip(), x)), corpus))
+            corpus = list(map(lambda x: list(filter(lambda y: len(y) > 0, x)), corpus))
+            examples = [ClsInputExample(text, label) for label, text in corpus]
+        del corpus
+
+        # Convert examples to features
+        features = convert_examples_to_features(examples, tokenizer, args)
+        del examples
+
+        print('Saving features into cached file', cached_features_file)
+        torch.save(features, cached_features_file)
+
+    if args.local_rank == 0: # Make sure only the first process in distributed training process the dataset, and the others will use the cache
+        dist.barrier()
     
-    examples = [InputExample(text) for text in corpus]
-    
-    features = convert_examples_to_features(examples, tokenizer, args.max_seq_len)
-    
-    all_input_ids = [feature.input_ids for feature in features]
-    
-    dataset = GPTPretrainDataset(all_input_ids)
+    # Create dataset with features
+    if args.pretrain:
+        all_input_ids = torch.tensor([feature.input_ids for feature in features], dtype=torch.long)
+        dataset = TensorDataset(all_input_ids)
+    elif args.finetune:
+        all_input_ids = torch.tensor([feature.input_ids for feature in features], dtype=torch.long)
+        all_label_ids = torch.tensor([feature.label_id for feature in features], dtype=torch.long)
+        dataset = TensorDataset(all_input_ids, all_label_ids)
     
     return dataset
-    
