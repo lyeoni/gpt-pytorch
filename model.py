@@ -234,7 +234,7 @@ class GPTClsHead(nn.Module):
         # |attention_weights| : [(batch_size, n_heads, seq_len, seq_len)] * n_layers
         outputs = outputs[inputs.eq(self.cls_token_id)]
         # |outputs| : (batch_size, d_model)
-
+        
         cls_logits = self.linear(self.dropout(outputs))
         # |cls_logits| : (batch_size, n_class)
         
