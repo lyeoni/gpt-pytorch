@@ -1,5 +1,6 @@
 from typing import Iterable, Union, List
 from pathlib import Path
+import json
 
 import torch
 import torch.distributed as dist
@@ -33,21 +34,29 @@ class ClsInputFeatures:
 
 def convert_examples_to_features(examples,
                                  tokenizer,
-                                 args):
+                                 args,
+                                 mode):
     bos_token = tokenizer.bos_token
     eos_token = tokenizer.eos_token
     pad_token = tokenizer.pad_token
-    
+
+    # Build label dict(vocab) with examples
     if args.finetune:
-        labels = sorted(list(set([example.label for example in examples])))
-        label_dict = {label: i for i, label in enumerate(labels)}
-        # print(label_dict)
-    
+        if mode == 'train':
+            labels = sorted(list(set([example.label for example in examples])))
+            label_dict = {label: i for i, label in enumerate(labels)}
+            with open(args.cached_label_dict, 'w') as file:
+                json.dump(label_dict, file,  indent=4)
+        elif mode == 'test':
+            with open(args.cached_label_dict, 'r') as file:
+                label_dict = json.load(file)
+
+    # Create features
     features = []
     for i, example in enumerate(examples):
         tokens = tokenizer.tokenize(example.text)
         tokens = [bos_token] + tokens[:args.max_seq_len-2] + [eos_token] # BOS, EOS
-        tokens += [pad_token] * (args.max_seq_len - len(tokens)) # padding
+        tokens += [pad_token] * (args.max_seq_len - len(tokens))
 
         input_ids = tokenizer.convert_tokens_to_ids(tokens)
         if args.finetune:
@@ -64,7 +73,7 @@ def convert_examples_to_features(examples,
 
 def create_examples(args, tokenizer, mode='train'):
     if args.local_rank not in [-1, 0]: # Make sure only the first process in distributed training process the dataset, and the others will use the cache
-        torch.distributed.barrier()
+        dist.barrier()
 
     # Load data features from cache or dataset file
     assert mode in ('train', 'test')
@@ -88,11 +97,9 @@ def create_examples(args, tokenizer, mode='train'):
             corpus = list(map(lambda x: list(map(lambda y: y.strip(), x)), corpus))
             corpus = list(map(lambda x: list(filter(lambda y: len(y) > 0, x)), corpus))
             examples = [ClsInputExample(text, label) for label, text in corpus]
-        del corpus
 
         # Convert examples to features
-        features = convert_examples_to_features(examples, tokenizer, args)
-        del examples
+        features = convert_examples_to_features(examples, tokenizer, args, mode)
 
         print('Saving features into cached file', cached_features_file)
         torch.save(features, cached_features_file)

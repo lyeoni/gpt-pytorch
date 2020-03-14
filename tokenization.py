@@ -30,7 +30,7 @@ class Tokenizer:
         # Build vocab and ids_to_tokens
         with open(vocab_file, 'r', encoding='utf-8') as reader:
             for i, line in enumerate(reader.readlines()):
-                token =line.split()[0]
+                token = line.split()[0]
                 self.vocab[token] = i
         for token, id in self.vocab.items():
             self.ids_to_tokens[id] = token
