@@ -1,0 +1,86 @@
+Namespace(attn_dropout=0.1, batch_size=16, cached_label_dict='cached_label_dict.json', distributed=True, do_eval=True, embd_dropout=0.1, epochs=100, ffn_hidden=3072, finetune=True, hidden=768, local_rank=0, lr=1.5e-05, max_seq_len=384, n_attn_heads=12, n_layers=12, n_workers=6, no_cuda=False, output_model_prefix='model', pretrain=False, pretrained_model='.model/model.ep22', pretrained_sp_model='wiki103-25000.model', resid_dropout=0.1, test_corpus='.data/aclImdb/imdb.test', train_corpus='.data/aclImdb/imdb.train', vocab_file='wiki103-25000.vocab')
+Namespace(attn_dropout=0.1, batch_size=16, cached_label_dict='cached_label_dict.json', distributed=True, do_eval=True, embd_dropout=0.1, epochs=100, ffn_hidden=3072, finetune=True, hidden=768, local_rank=1, lr=1.5e-05, max_seq_len=384, n_attn_heads=12, n_layers=12, n_workers=6, no_cuda=False, output_model_prefix='model', pretrain=False, pretrained_model='.model/model.ep22', pretrained_sp_model='wiki103-25000.model', resid_dropout=0.1, test_corpus='.data/aclImdb/imdb.test', train_corpus='.data/aclImdb/imdb.train', vocab_file='wiki103-25000.vocab')
+Loading features from cached file cached_features_finetune_train_384
+Loading features from cached file cached_features_finetune_train_384
+Loading features from cached file cached_features_finetune_test_384
+Loading features from cached file cached_features_finetune_test_384
+Iteration 78 (78/391)   Loss: 0.8402 Acc: 54.2%
+Iteration 156 (156/391) Loss: 0.7880 Acc: 54.6%
+Iteration 234 (234/391) Loss: 0.7537 Acc: 56.7%
+Iteration 312 (312/391) Loss: 0.7213 Acc: 59.1%
+Iteration 390 (390/391) Loss: 0.6867 Acc: 61.9%
+Train Epoch 1 [rank: 0] >       Loss: 0.6849 / Acc: 61.8%
+Function Time: train    >       9 min 20 sec
+Train Epoch 1 [rank: 1] >       Loss: 0.6770 / Acc: 62.2%
+Eval Epoch 1 [rank: 1]  >       Loss: 0.4623 / Acc: 78.4%
+Eval Epoch 1 [rank: 0]  >       Loss: 0.4782 / Acc: 77.4%
+Iteration 78 (78/391)   Loss: 0.5193 Acc: 76.3%
+Iteration 156 (156/391) Loss: 0.4700 Acc: 78.2%
+Iteration 234 (234/391) Loss: 0.4479 Acc: 79.3%
+Iteration 312 (312/391) Loss: 0.4365 Acc: 79.7%
+Iteration 390 (390/391) Loss: 0.4206 Acc: 80.6%
+Train Epoch 2 [rank: 0] >       Loss: 0.4195 / Acc: 80.4%
+Function Time: train    >       9 min 4 sec
+Train Epoch 2 [rank: 1] >       Loss: 0.4252 / Acc: 80.4%
+Eval Epoch 2 [rank: 1]  >       Loss: 0.4298 / Acc: 80.4%
+Eval Epoch 2 [rank: 0]  >       Loss: 0.4330 / Acc: 80.8%
+Iteration 78 (78/391)   Loss: 0.3992 Acc: 84.5%
+Iteration 156 (156/391) Loss: 0.3716 Acc: 84.9%
+Iteration 234 (234/391) Loss: 0.3563 Acc: 85.3%
+Iteration 312 (312/391) Loss: 0.3514 Acc: 85.0%
+Iteration 390 (390/391) Loss: 0.3414 Acc: 85.5%
+Train Epoch 3 [rank: 0] >       Loss: 0.3405 / Acc: 85.2%
+Function Time: train    >       9 min 2 sec
+Train Epoch 3 [rank: 1] >       Loss: 0.3432 / Acc: 84.5%
+Eval Epoch 3 [rank: 1]  >       Loss: 0.3684 / Acc: 83.6%
+Eval Epoch 3 [rank: 0]  >       Loss: 0.3763 / Acc: 83.8%
+Iteration 78 (78/391)   Loss: 0.3617 Acc: 85.4%
+Iteration 156 (156/391) Loss: 0.3232 Acc: 86.3%
+Iteration 234 (234/391) Loss: 0.3153 Acc: 86.7%
+Iteration 312 (312/391) Loss: 0.3158 Acc: 86.7%
+Iteration 390 (390/391) Loss: 0.3054 Acc: 87.2%
+Train Epoch 4 [rank: 0] >       Loss: 0.3046 / Acc: 87.0%
+Function Time: train    >       9 min 5 sec
+Train Epoch 4 [rank: 1] >       Loss: 0.2961 / Acc: 87.0%
+Eval Epoch 4 [rank: 1]  >       Loss: 0.4117 / Acc: 83.6%
+Eval Epoch 4 [rank: 0]  >       Loss: 0.4151 / Acc: 83.6%
+Iteration 78 (78/391)   Loss: 0.3206 Acc: 86.8%
+Iteration 156 (156/391) Loss: 0.2835 Acc: 87.9%
+Iteration 234 (234/391) Loss: 0.2780 Acc: 88.0%
+Iteration 312 (312/391) Loss: 0.2771 Acc: 87.9%
+Iteration 390 (390/391) Loss: 0.2706 Acc: 88.4%
+Train Epoch 5 [rank: 0] >       Loss: 0.2699 / Acc: 88.2%
+Function Time: train    >       9 min 3 sec
+Train Epoch 5 [rank: 1] >       Loss: 0.2679 / Acc: 88.3%
+Eval Epoch 5 [rank: 1]  >       Loss: 0.3494 / Acc: 85.5%
+Eval Epoch 5 [rank: 0]  >       Loss: 0.3704 / Acc: 85.3%
+Iteration 78 (78/391)   Loss: 0.3003 Acc: 88.6%
+Iteration 156 (156/391) Loss: 0.2642 Acc: 89.3%
+Iteration 234 (234/391) Loss: 0.2507 Acc: 89.9%
+Iteration 312 (312/391) Loss: 0.2509 Acc: 89.7%
+Iteration 390 (390/391) Loss: 0.2380 Acc: 90.1%
+Train Epoch 6 [rank: 0] >       Loss: 0.2374 / Acc: 89.9%
+Function Time: train    >       9 min 7 sec
+Train Epoch 6 [rank: 1] >       Loss: 0.2430 / Acc: 89.8%
+Eval Epoch 6 [rank: 1]  >       Loss: 0.3990 / Acc: 84.7%
+Eval Epoch 6 [rank: 0]  >       Loss: 0.4182 / Acc: 84.5%
+Iteration 78 (78/391)   Loss: 0.2787 Acc: 89.2%
+Iteration 156 (156/391) Loss: 0.2335 Acc: 90.9%
+Iteration 234 (234/391) Loss: 0.2184 Acc: 91.5%
+Iteration 312 (312/391) Loss: 0.2141 Acc: 91.7%
+Iteration 390 (390/391) Loss: 0.2034 Acc: 92.1%
+Train Epoch 7 [rank: 0] >       Loss: 0.2029 / Acc: 91.9%
+Function Time: train    >       9 min 5 sec
+Train Epoch 7 [rank: 1] >       Loss: 0.2094 / Acc: 91.4%
+Eval Epoch 7 [rank: 1]  >       Loss: 0.3956 / Acc: 86.2%
+Eval Epoch 7 [rank: 0]  >       Loss: 0.4165 / Acc: 85.9%
+Iteration 78 (78/391)   Loss: 0.2434 Acc: 91.5%
+Iteration 156 (156/391) Loss: 0.2132 Acc: 92.0%
+Iteration 234 (234/391) Loss: 0.1985 Acc: 92.4%
+Iteration 312 (312/391) Loss: 0.1989 Acc: 92.1%
+Iteration 390 (390/391) Loss: 0.1887 Acc: 92.6%
+Train Epoch 8 [rank: 0] >       Loss: 0.1882 / Acc: 92.3%
+Function Time: train    >       9 min 1 sec
+Train Epoch 8 [rank: 1] >       Loss: 0.1869 / Acc: 92.1%
+Eval Epoch 8 [rank: 1]  >       Loss: 0.4365 / Acc: 85.7%
+Eval Epoch 8 [rank: 0]  >       Loss: 0.4567 / Acc: 85.6%
