@@ -10,6 +10,7 @@ PreNLP is Preprocessing Library for Natural Language Processing. It provides sen
 ```
 $ pip install prenlp
 ```
+<br>
 
 ### 1. Setup input pipeline
 
@@ -25,7 +26,7 @@ $ ls .data/wikitext-103
 wiki.test  wiki.train  wiki.valid
 $ python vocab.py --corpus .data/wikitext-103/wiki.train --prefix wiki103
 ```
-<br><br>
+<br>
 
 ### 2. Unsupervised pre-training
 ```
@@ -45,7 +46,7 @@ $ python -m torch.distributed.launch --nproc_per_node=<NPROC_PER_NODE> --nnodes=
                                     --pretrained_model <PRETRAINED_MODEL> \
                                     --pretrain --do_eval --distributed
 ```
-<br><br>
+<br>
 
 ### 3. Supervised fine-tuning
 ```
@@ -65,7 +66,16 @@ $ python -m torch.distributed.launch --nproc_per_node=<NPROC_PER_NODE> --nnodes=
                                     --pretrained_model <PRETRAINED_MODEL> \
                                     --finetune --do_eval --distributed
 ```
-<br><br>
+<br>
+
+## Questions and Discussions
+### Does auxiliary objective function have a bigger impact?
+GPT authors mentioned that "We additionally found that including language modeling as an auxiliary objective to the fine-tuninghelped learning by (a) improving generalization of the supervised model, and (b) accelerating convergence".
+
+And, in our experiments on IMDb dataset, it shows that the auxiliary objective function improves test-accuracy as shown below.
+The orange line is for _auxiliary weight = 0_, blue line is for _auxiliary weight = 0.25_, red line is for _auxiliary weight = 0.5_. And you can also see training logs for this in [here](https://github.com/lyeoni/gpt-pytorch/tree/master/logs).
+<p align="center"><img width= 700 src="logs/tensorboard-visualization.png"></p>
+<br>
 
 ## List of options
 You may need to change below argument parameters.
