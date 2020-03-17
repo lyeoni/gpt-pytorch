@@ -220,11 +220,15 @@ class GPTClsHead(nn.Module):
         self.cls_token_id = cls_token_id
         
         self.gpt = gpt
-        self.linear = nn.Linear(d_model, n_class)
+        # LM
+        self.linear1 = nn.Linear(d_model, vocab_size, bias=False) 
+        self.linear1.weight = gpt.decoder.embedding.weight
+        # Classification
+        self.linear2 = nn.Linear(d_model, n_class) 
         self.dropout = nn.Dropout(cls_pdrop)
 
-        nn.init.normal_(self.linear.weight, std=0.02)
-        nn.init.normal_(self.linear.bias, 0)
+        nn.init.normal_(self.linear2.weight, std=0.02)
+        nn.init.normal_(self.linear2.bias, 0)
         
     def forward(self, inputs):
         # |inputs| : (batch_size, seq_len)
@@ -232,10 +236,13 @@ class GPTClsHead(nn.Module):
         outputs, attention_weights = self.gpt(inputs)
         # |outputs| : (batch_size, seq_len, d_model)
         # |attention_weights| : [(batch_size, n_heads, seq_len, seq_len)] * n_layers
+
+        lm_logits = self.linear1(outputs)
+        # |lm_logits| : (batch_size, seq_len, vocab_size)
+
         outputs = outputs[inputs.eq(self.cls_token_id)]
         # |outputs| : (batch_size, d_model)
-        
-        cls_logits = self.linear(self.dropout(outputs))
+        cls_logits = self.linear2(self.dropout(outputs))
         # |cls_logits| : (batch_size, n_class)
         
-        return cls_logits
+        return lm_logits, cls_logits

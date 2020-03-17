@@ -25,6 +25,7 @@ $ ls .data/wikitext-103
 wiki.test  wiki.train  wiki.valid
 $ python vocab.py --corpus .data/wikitext-103/wiki.train --prefix wiki103
 ```
+<br><br>
 
 ### 2. Unsupervised pre-training
 ```
@@ -44,6 +45,7 @@ $ python -m torch.distributed.launch --nproc_per_node=<NPROC_PER_NODE> --nnodes=
                                     --pretrained_model <PRETRAINED_MODEL> \
                                     --pretrain --do_eval --distributed
 ```
+<br><br>
 
 ### 3. Supervised fine-tuning
 ```
@@ -63,43 +65,43 @@ $ python -m torch.distributed.launch --nproc_per_node=<NPROC_PER_NODE> --nnodes=
                                     --pretrained_model <PRETRAINED_MODEL> \
                                     --finetune --do_eval --distributed
 ```
+<br><br>
 
-### List of options
+## List of options
 You may need to change below argument parameters.
 ```
 $ python main.py -h
-usage: main.py [-h] --train_corpus TRAIN_CORPUS [--test_corpus TEST_CORPUS]
-               [--vocab_file VOCAB_FILE]
-               [--pretrained_sp_model PRETRAINED_SP_MODEL]
+usage: main.py [-h] --train_corpus TRAIN_CORPUS --vocab_file VOCAB_FILE
+               --pretrained_sp_model PRETRAINED_SP_MODEL [--pretrain]
+               [--finetune] [--do_eval] [--test_corpus TEST_CORPUS]
                [--pretrained_model PRETRAINED_MODEL]
-               [--output_model_prefix OUTPUT_MODEL_PREFIX] [--pretrain]
-               [--finetune] [--do_eval] [--batch_size BATCH_SIZE]
-               [--max_seq_len MAX_SEQ_LEN] [--n_workers N_WORKERS]
-               [--epochs EPOCHS] [--lr LR] [--auxiliary_ratio AUXILIARY_RATIO]
-               [--local_rank LOCAL_RANK] [--no_cuda] [--distributed]
-               [--hidden HIDDEN] [--n_layers N_LAYERS]
-               [--n_attn_heads N_ATTN_HEADS] [--embd_dropout EMBD_DROPOUT]
-               [--resid_dropout RESID_DROPOUT] [--attn_dropout ATTN_DROPOUT]
-               [--ffn_hidden FFN_HIDDEN]
+               [--output_model_prefix OUTPUT_MODEL_PREFIX]
+               [--batch_size BATCH_SIZE] [--max_seq_len MAX_SEQ_LEN]
+               [--n_workers N_WORKERS] [--epochs EPOCHS] [--lr LR]
+               [--auxiliary_ratio AUXILIARY_RATIO] [--local_rank LOCAL_RANK]
+               [--no_cuda] [--distributed] [--hidden HIDDEN]
+               [--n_layers N_LAYERS] [--n_attn_heads N_ATTN_HEADS]
+               [--embd_dropout EMBD_DROPOUT] [--resid_dropout RESID_DROPOUT]
+               [--attn_dropout ATTN_DROPOUT] [--ffn_hidden FFN_HIDDEN]
                [--cached_label_dict CACHED_LABEL_DICT]
 
 optional arguments:
   -h, --help            show this help message and exit
   --train_corpus TRAIN_CORPUS
-                        train corpus path to pre-train/fine-tune
-  --test_corpus TEST_CORPUS
-                        test corpus path to pre-train/fine-tune
+                        corpus for either pre-train or fine-tune
   --vocab_file VOCAB_FILE
-                        pretrained vocabulary path
+                        pretrained vocabulary
   --pretrained_sp_model PRETRAINED_SP_MODEL
-                        pretrained sentencepiece model path
+                        pretrained sentencepiece model
+  --pretrain
+  --finetune
+  --do_eval
+  --test_corpus TEST_CORPUS
+                        corpus for either pre-train or fine-tune evaluation
   --pretrained_model PRETRAINED_MODEL
                         pretrained GPT model path
   --output_model_prefix OUTPUT_MODEL_PREFIX
                         output model name prefix
-  --pretrain
-  --finetune
-  --do_eval
   --batch_size BATCH_SIZE
                         batch size
   --max_seq_len MAX_SEQ_LEN
@@ -120,13 +122,13 @@ optional arguments:
   --n_attn_heads N_ATTN_HEADS
                         the number of multi-head attention heads
   --embd_dropout EMBD_DROPOUT
-                        the embedding dropout value
+                        embedding dropout value
   --resid_dropout RESID_DROPOUT
-                        the residual dropout value
+                        residual dropout value
   --attn_dropout ATTN_DROPOUT
-                        the attention dropout value
+                        attention dropout value
   --ffn_hidden FFN_HIDDEN
-                        the dimension of the feedforward network
+                        dimension of the feedforward network
   --cached_label_dict CACHED_LABEL_DICT
 ```
 
