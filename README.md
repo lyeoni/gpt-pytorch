@@ -1,14 +1,20 @@
 # OpenAI GPT
+[![LICENSE](https://img.shields.io/github/license/lyeoni/gpt-pytorch?style=flat-square)](https://github.com/lyeoni/gpt-pytorch/blob/master/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/lyeoni/gpt-pytorch?style=flat-square)](https://github.com/lyeoni/gpt-pytorch/issues)
+[![GitHub stars](https://img.shields.io/github/stars/lyeoni/gpt-pytorch?style=flat-square&color=important)](https://github.com/lyeoni/gpt-pytorch/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/lyeoni/gpt-pytorch?style=flat-square&color=blueviolet)](https://github.com/lyeoni/gpt-pytorch/network/members)
+
 PyTorch Implementation of OpenAI GPT
 
 <p align="center"><img width= 70 src="https://pytorch.org/assets/images/logo-icon.svg"></p>
 
-
 ## Quick Start
-### 0. Install PreNLP library
+### 0. Install dependencies
 PreNLP is Preprocessing Library for Natural Language Processing. It provides sentencepiece tokenizer.
 ```
 $ pip install prenlp
+$ git clone https://github.com/LiyuanLucasLiu/RAdam
+$ python RAdam/setup.py install
 ```
 <br>
 
@@ -30,34 +36,25 @@ $ python vocab.py --corpus .data/wikitext-103/wiki.train --prefix wiki103
 
 ### 2. Unsupervised pre-training
 ```
-$ python main.py --train_corpus <TRAIN_CORPUS> --test_corpus <TEST_CORPUS> 
-                 --vocab_file <VOCAB_FILE> \
-                 --pretrained_sp_model <PRETRAINED_SP_MODEL> \
-                 --pretrained_model <PRETRAINED_MODEL> \
-                 --pretrain --do_eval
+$ python main.py --train_corpus <TRAIN_CORPUS> --vocab_file <VOCAB_FILE> --pretrained_sp_model <PRETRAINED_SP_MODEL> --pretrain
 ```
 
-#### Distributed training with torch.distributed (recommended)
+#### Distributed training with torch.distributed (Recommended)
 You can apply to both single-node(multi-GPU) and multi-node distributed training.
 ```
-$ python -m torch.distributed.launch --nproc_per_node=<NPROC_PER_NODE> --nnodes=<NNODES> --node_rank=<NODE_RANK> --master_addr=<MASTER_ADDR> --master_port=<MASTER_PORT> main.py --train_corpus <TRAIN_CORPUS> --test_corpus <TEST_CORPUS> \
+$ python -m torch.distributed.launch --nproc_per_node=<NPROC_PER_NODE> --nnodes=<NNODES> --node_rank=<NODE_RANK> --master_addr=<MASTER_ADDR> --master_port=<MASTER_PORT> main.py --train_corpus <TRAIN_CORPUS> \
                                     --vocab_file <VOCAB_FILE> \
                                     --pretrained_sp_model <PRETRAINED_SP_MODEL> \
-                                    --pretrained_model <PRETRAINED_MODEL> \
-                                    --pretrain --do_eval --distributed
+                                    --pretrain --distributed
 ```
 <br>
 
 ### 3. Supervised fine-tuning
 ```
-$ python main.py --train_corpus <TRAIN_CORPUS> --test_corpus <TEST_CORPUS> 
-                 --vocab_file <VOCAB_FILE> \
-                 --pretrained_sp_model <PRETRAINED_SP_MODEL> \
-                 --pretrained_model <PRETRAINED_MODEL> \
-                 --finetune --do_eval
+$ python main.py --train_corpus <TRAIN_CORPUS> --test_corpus <TEST_CORPUS>  --vocab_file <VOCAB_FILE> --pretrained_sp_model <PRETRAINED_SP_MODEL> --pretrained_model <PRETRAINED_MODEL> --finetune --do_eval
 ```
 
-#### Distributed training with torch.distributed (recommended)
+#### Distributed training with torch.distributed (Recommended)
 You can apply to both single-node(multi-GPU) and multi-node distributed training.
 ```
 $ python -m torch.distributed.launch --nproc_per_node=<NPROC_PER_NODE> --nnodes=<NNODES> --node_rank=<NODE_RANK> --master_addr=<MASTER_ADDR> --master_port=<MASTER_PORT> main.py --train_corpus <TRAIN_CORPUS> --test_corpus <TEST_CORPUS> \
