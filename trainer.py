@@ -84,7 +84,7 @@ class Trainer:
         
         self.model.train()
         for i, batch in enumerate(self.train_loader):
-            inputs = batch.to(self.device)
+            inputs = batch[0].to(self.device)
             targets = inputs[:, 1:].contiguous()
             # |inputs| : (batch_size, seq_len), |targets| : (batch_size, seq_len-1)
             
